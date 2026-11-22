@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>バカラ罫線</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-0: #050b1c;
+    --navy-1: #0a1638;
+    --navy-2: #12245a;
+    --gold-grad: linear-gradient(135deg, #7a5a1c 0%, #f3d27a 22%, #a8822f 45%, #ffe9a8 62%, #b48a34 80%, #6e4f17 100%);
+    --gold-text: linear-gradient(180deg, #fff3c4 0%, #f5d26b 38%, #c9952e 62%, #f7dc8a 100%);
+    --red: #e3262f;
+    --blue: #2a68e3;
+    --green: #16a34a;
+    --gold-accent: #f5d26b;
+    --red-num: #ff3a40;
+    --blue-num: #5d86ff;
+    --green-num: #34d17a;
+    --sheet: #f8fafd;
+    --line: #cfd8e7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--navy-0);
+    overflow: hidden;
+    font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #fff;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* ===== 16:9 基準の 1920x1080 基準ステージ（画面に合わせて自動拡縮） ===== */
+  #stage {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 1920px; height: 1080px;
+    transform: translate(-50%, -50%);
+    transform-origin: center center;
+    padding: 12px;
+    background: var(--gold-grad);
+  }
+  .inner {
+    width: 100%; height: 100%;
+    padding: 12px 14px;
+    background: radial-gradient(ellipse at 50% 0%, #142a66 0%, var(--navy-1) 55%, var(--navy-0) 100%);
+    display: grid;
+    grid-template-rows: 108px minmax(0, 1.08fr) minmax(0, 0.86fr) 104px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+
+  /* 金の縁取り */
+  .gold { background: var(--gold-grad); padding: 3px; border-radius: 12px; min-width: 0; min-height: 0; }
+  .gold > .body { width: 100%; height: 100%; border-radius: 9px; overflow: hidden; }
+
+  /* ---- 見出し（ヘッダー） ---- */
+  .header { grid-column: 1 / 4; }
+  .header .body {
+    display: flex; align-items: center;
+    padding: 0 20px 0 26px;
+    background: linear-gradient(180deg, var(--navy-2) 0%, var(--navy-1) 100%);
+    gap: 10px;
+  }
+  .title {
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif; font-weight: 900;
+    font-size: 56px; line-height: 1; letter-spacing: .05em;
+    background: var(--gold-text);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 3px 0 rgba(0,0,0,.45));
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .shoe-meta {
+    display: flex; flex-direction: column; justify-content: flex-end; gap: 4px;
+    align-self: flex-end; margin-bottom: 14px; flex-shrink: 0;
+  }
+  .period {
+    font-size: 18px; font-weight: 700; color: #e9c66a; letter-spacing: .05em;
+    white-space: nowrap;
+  }
+  .trend-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 15px; font-weight: 900; letter-spacing: .03em;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(243,210,122,.4);
+    color: #ffe9a8; white-space: nowrap;
+  }
+  .trend-pill.dragon {
+    background: linear-gradient(90deg, #8c1d18 0%, #d97706 50%, #8c1d18 100%);
+    border-color: #ffe9a8; color: #fff8db;
+    box-shadow: 0 0 18px rgba(245,210,107,.65);
+    animation: pulseDragon 1.4s ease-in-out infinite;
+  }
+  @keyframes pulseDragon {
+    0%, 100% { box-shadow: 0 0 12px rgba(245,210,107,.55); transform: scale(1); }
+    50% { box-shadow: 0 0 26px rgba(255,233,168,.95); transform: scale(1.03); }
+  }
+
+  .stats { margin-left: auto; display: flex; align-items: center; flex-shrink: 0; }
+  .stat { display: flex; align-items: center; white-space: nowrap; flex-shrink: 0; }
+  .stat .ring { width: 32px; height: 32px; margin-right: 8px; flex-shrink: 0; }
+  .stat .label { font-size: 20px; font-weight: 900; letter-spacing: .01em; white-space: nowrap; }
+  .stat .subpct { font-size: 14px; font-weight: 700; color: #9db0d8; margin-left: 5px; }
+  .stat .num {
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif; font-weight: 900;
+    font-size: 48px; line-height: 1; margin-left: 10px;
+    min-width: 1.1em; text-align: right;
+    text-shadow: 0 3px 0 rgba(0,0,0,.4);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat.win .num { color: var(--red-num); }
+  .stat.lose .num { color: var(--blue-num); }
+  .stat.hold .num { color: var(--green-num); }
+  .divider {
+    width: 2px; height: 56px; margin: 0 13px; flex-shrink: 0;
+    background: linear-gradient(180deg, transparent, #d9b45a, transparent);
+  }
+  .side-badges {
+    display: flex; flex-direction: column; gap: 3px; margin-left: 10px;
+    padding-left: 12px; border-left: 1px solid rgba(217,180,90,.35);
+    font-size: 14px; font-weight: 700; color: #dbe6ff; white-space: nowrap;
+  }
+  .side-badges span b { font-family: "Noto Serif JP", serif; font-size: 17px; margin-left: 4px; color: var(--gold-accent); }
+  .guide-btn {
+    margin-left: 10px; height: 48px; padding: 0 14px;
+    border-radius: 8px; border: 2px solid #e9c66a;
+    background: linear-gradient(180deg, #1d3985 0%, #0e1e4f 100%);
+    color: #fff3c4; font-family: inherit; font-size: 16px; font-weight: 900;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0,0,0,.35);
+    transition: transform .1s, filter .15s;
+  }
+  .guide-btn:hover { filter: brightness(1.18); }
+  .guide-btn:active { transform: translateY(1px); }
+
+  /* ---- 罫線のパネル ---- */
+  .panel .body { display: flex; flex-direction: column; background: var(--navy-1); }
+  .road-main { grid-column: 1 / 4; }
+  .bar {
+    height: 60px; flex: 0 0 60px;
+    display: flex; align-items: center;
+    padding: 0 22px 0 26px;
+    background: linear-gradient(180deg, #13296a 0%, #0b1a45 100%);
+    border-bottom: 2px solid #c79c3e;
+    gap: 14px;
+  }
+  .bar h2 {
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif; font-weight: 900;
+    font-size: 38px; letter-spacing: .1em; line-height: 1;
+    text-shadow: 0 3px 0 rgba(0,0,0,.45);
+    white-space: nowrap;
+  }
+  .bar .en {
+    font-size: 16px; font-weight: 700; color: #c7d5f5; letter-spacing: .04em;
+    opacity: .85; white-space: nowrap;
+  }
+  .bar .sub-note {
+    font-size: 15px; font-weight: 700; color: #e9c66a; white-space: nowrap;
+  }
+  .legend { margin-left: auto; display: flex; align-items: center; gap: 18px; white-space: nowrap; }
+  .legend .item { display: flex; align-items: center; font-size: 19px; font-weight: 700; color: #e8edf8; }
+  .legend .ring { width: 24px; height: 24px; margin-right: 7px; flex-shrink: 0; }
+  .legend .cnt {
+    margin-left: 8px; font-family: "Noto Serif JP", serif; font-weight: 900; font-size: 26px;
+    font-variant-numeric: tabular-nums;
+  }
+  .legend .cnt.r { color: var(--red-num); }
+  .legend .cnt.b { color: var(--blue-num); }
+
+  /* 上段メイン領域（左: 大路 / 右: 珠盤路 + 問路予測） */
+  .main-split {
+    flex: 1; display: grid;
+    grid-template-columns: minmax(0, 1fr) 410px;
+    min-height: 0; background: var(--navy-1);
+  }
+  .main-right {
+    display: flex; flex-direction: column;
+    border-left: 3px solid #c79c3e;
+    background: var(--navy-1);
+    min-height: 0;
+  }
+  .mini-bar {
+    height: 36px; flex: 0 0 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+    background: linear-gradient(180deg, #162f78 0%, #0d1e4d 100%);
+    border-bottom: 1px solid #c79c3e;
+    font-size: 16px; font-weight: 900; color: #ffe9a8; letter-spacing: .06em;
+  }
+  .mini-bar small { font-size: 13px; font-weight: 700; color: #b7c8eb; }
+
+  /* 問路（次に出たら下三路はどうなる？） */
+  .ask-box {
+    flex: 0 0 84px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    border-top: 2px solid #c79c3e;
+    background: linear-gradient(180deg, #102255 0%, #091433 100%);
+  }
+  .ask-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    border: none; background: transparent; color: #fff; cursor: pointer;
+    padding: 6px 10px; transition: background .12s;
+  }
+  .ask-btn + .ask-btn { border-left: 1px solid rgba(217,180,90,.4); }
+  .ask-btn:hover { background: rgba(255,255,255,.08); }
+  .ask-btn.previewing { background: rgba(245,210,107,.18); }
+  .ask-title {
+    font-size: 15px; font-weight: 900; display: flex; align-items: center; gap: 6px;
+  }
+  .ask-title .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  .ask-title .dot.r { background: var(--red); }
+  .ask-title .dot.b { background: var(--blue); }
+  .ask-marks { display: flex; align-items: center; gap: 14px; height: 28px; }
+  .ask-marks svg { width: 24px; height: 24px; }
+
+  /* 白シート（グリッド） */
+  .sheet { flex: 1; position: relative; background: var(--sheet); min-height: 0; overflow: hidden; }
+  .sheet svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* ---- 下部操作パネル（入力コントローラー） ---- */
+  .controls { grid-column: 1 / 4; }
+  .controls .body {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, #102359 0%, #081230 100%);
+  }
+  .play-btns { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .pbtn {
+    height: 76px; min-width: 196px; padding: 0 20px;
+    border-radius: 10px; border: 2px solid rgba(255,255,255,.35);
+    color: #fff; font-family: inherit; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    box-shadow: 0 5px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.35);
+    transition: transform .07s, filter .12s;
+  }
+  .pbtn:hover { filter: brightness(1.1); }
+  .pbtn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.45); }
+  .pbtn .main { font-family: "Noto Serif JP", serif; font-size: 28px; font-weight: 900; line-height: 1.1; letter-spacing: .04em; }
+  .pbtn .sub { font-size: 13px; font-weight: 700; opacity: .9; }
+  .pbtn.banker { background: linear-gradient(180deg, #f03840 0%, #b8141c 100%); border-color: #ff9a9e; }
+  .pbtn.player { background: linear-gradient(180deg, #3b7bf5 0%, #1b4bb8 100%); border-color: #9dc0ff; }
+  .pbtn.tie { min-width: 152px; background: linear-gradient(180deg, #22b85a 0%, #117a37 100%); border-color: #8ceba8; }
+
+  .mods-wrap {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 0 14px; border-left: 1px solid rgba(217,180,90,.35); border-right: 1px solid rgba(217,180,90,.35);
+    flex: 1; min-width: 0;
+  }
+  .mods-label {
+    font-size: 13px; font-weight: 700; color: #e9c66a; letter-spacing: .04em;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mods-row { display: flex; flex-wrap: nowrap; gap: 7px; }
+  .chip {
+    flex: 1; height: 42px; padding: 0 8px;
+    border-radius: 7px; border: 1.5px solid rgba(207,216,231,.4);
+    background: rgba(255,255,255,.06); color: #dce6ff;
+    font-family: inherit; font-size: 15px; font-weight: 900;
+    cursor: pointer; white-space: nowrap;
+    transition: all .1s;
+  }
+  .chip:hover { background: rgba(255,255,255,.14); }
+  .chip.on {
+    background: linear-gradient(180deg, #f5d26b 0%, #c9952e 100%);
+    color: #161103; border-color: #fff3c4;
+    box-shadow: 0 0 12px rgba(245,210,107,.55);
+  }
+  .chip.on.red { background: linear-gradient(180deg, #ff4b52 0%, #b8141c 100%); color: #fff; border-color: #ffc2c4; }
+  .chip.on.blue { background: linear-gradient(180deg, #4f8aff 0%, #1b4bb8 100%); color: #fff; border-color: #c2d7ff; }
+
+  .util-btns { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .ubtn {
+    height: 56px; padding: 0 14px;
+    border-radius: 8px; border: 1.5px solid rgba(217,180,90,.55);
+    background: linear-gradient(180deg, #162e6e 0%, #0d1c45 100%);
+    color: #eef3ff; font-family: inherit; font-size: 16px; font-weight: 900;
+    cursor: pointer; white-space: nowrap;
+    transition: filter .12s, transform .07s;
+  }
+  .ubtn:hover { filter: brightness(1.18); }
+  .ubtn:active { transform: translateY(1px); }
+  .ubtn:disabled { opacity: .35; cursor: default; filter: none; }
+  .ubtn.danger { border-color: rgba(255,90,95,.65); color: #ffb3b5; }
+  .ubtn.demo { border-color: rgba(245,210,107,.8); color: #ffe9a8; }
+
+  /* プレビュー点滅アニメ */
+  @keyframes blinkPreview {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+  .preview-mark { animation: blinkPreview .75s ease-in-out infinite; }
+
+  /* ---- ルールガイド モーダル ---- */
+  .modal-mask {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(3, 7, 20, .82); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-mask.open { display: flex; }
+  .modal-gold {
+    width: 100%; max-width: 980px; max-height: 90vh;
+    background: var(--gold-grad); padding: 3px; border-radius: 14px;
+    display: flex;
+  }
+  .modal-body {
+    width: 100%; border-radius: 11px; overflow: auto;
+    background: linear-gradient(180deg, #102254 0%, #071029 100%);
+    padding: 26px 30px; color: #eef3ff; user-select: text;
+  }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 14px; margin-bottom: 18px; border-bottom: 2px solid #c79c3e;
+  }
+  .modal-head h3 {
+    font-family: "Noto Serif JP", serif; font-size: 30px; font-weight: 900;
+    background: var(--gold-text); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .modal-close {
+    border: 1.5px solid #e9c66a; background: #142b68; color: #fff3c4;
+    border-radius: 8px; padding: 8px 18px; font-size: 16px; font-weight: 900; cursor: pointer;
+  }
+  .g-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .g-card {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(217,180,90,.35);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .g-card.full { grid-column: 1 / 3; }
+  .g-card h4 {
+    font-size: 18px; font-weight: 900; color: #ffe9a8; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .g-card p, .g-card li { font-size: 14.5px; line-height: 1.72; color: #e2eafc; }
+  .g-card ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+  .g-card b { color: #fff; }
+  .g-card .tag-r { color: #ff6b70; font-weight: 900; }
+  .g-card .tag-b { color: #7ca3ff; font-weight: 900; }
+  .g-card .tag-g { color: #4ae38c; font-weight: 900; }
+  .g-card .tag-y { color: #f5d26b; font-weight: 900; }
+  .warn-note {
+    margin-top: 8px; padding: 10px 12px; border-radius: 8px;
+    background: rgba(245,210,107,.12); border-left: 4px solid #f5d26b;
+    font-size: 14px; line-height: 1.65; color: #fff3c4;
+  }
+
+  /* トースト通知 */
+  #toast {
+    position: fixed; left: 50%; bottom: 118px; transform: translateX(-50%);
+    z-index: 200; padding: 10px 22px; border-radius: 999px;
+    background: rgba(10, 22, 56, .95); border: 2px solid #f5d26b;
+    color: #fff3c4; font-size: 16px; font-weight: 900;
+    box-shadow: 0 8px 28px rgba(0,0,0,.55);
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="inner">
+    <!-- ヘッダー -->
+    <div class="gold header"><div class="body">
+      <div class="title">バカラ罫線</div>
+      <div class="shoe-meta">
+        <div class="period" id="shoeLabel">SHOE #1</div>
+        <div class="trend-pill" id="trendPill">待機中：下のボタンで結果を入力</div>
+      </div>
+      <div class="stats">
+        <div class="stat win">
+          <svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="24" fill="#e3262f"/></svg>
+          <span class="label">バンカー</span><span class="subpct" id="pctB"></span><span class="num" id="nBanker">0</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat lose">
+          <svg class="ring" viewBox="0 0 56 56"><circle cx="28" cy="28" r="24" fill="#2a68e3"/></svg>
+          <span class="label">プレイヤー</span><span class="subpct" id="pctP"></span><span class="num" id="nPlayer">0</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat hold">
+          <svg class="ring" viewBox="0 0 56 56"><line x1="12" y1="46" x2="46" y2="12" stroke="#16a34a" stroke-width="9" stroke-linecap="round"/></svg>
+          <span class="label">タイ</span><span class="num" id="nTie">0</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat total">
+          <span class="label">合計</span><span class="num" id="nTotal">0</span>
+        </div>
+      </div>
+      <div class="side-badges">
+        <span>BP<b id="nBP">0</b> / PP<b id="nPP">0</b></span>
+        <span>🐉龍7<b id="nD7">0</b> / 🐼P8<b id="nP8">0</b></span>
+      </div>
+      <button class="guide-btn" id="openGuideBtn" type="button">？ ルール・見方</button>
+    </div></div>
+
+    <!-- 中段フル幅：大路（Big Road）＋ 右側 珠盤路＆問路 -->
+    <div class="gold panel road-main"><div class="body">
+      <div class="bar">
+        <h2>大路</h2>
+        <span class="en">BIG ROAD</span>
+        <span class="sub-note" id="bigRoadNote">同じ勝者が続くと下へ・6連勝以上で右へ折れる（ドラゴン）</span>
+        <div class="legend">
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#e3262f" stroke-width="4.5"/><circle cx="7" cy="7" r="4" fill="#e3262f"/></svg>左上点=Bペア</div>
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#2a68e3" stroke-width="4.5"/><circle cx="25" cy="25" r="4" fill="#2a68e3"/></svg>右下点=Pペア</div>
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#e3262f" stroke-width="4.5"/><line x1="8" y1="24" x2="24" y2="8" stroke="#16a34a" stroke-width="4" stroke-linecap="round"/></svg>緑線=タイ</div>
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#fff7d6" stroke="#d97706" stroke-width="4"/><text x="16" y="21" text-anchor="middle" font-size="13" font-weight="900" fill="#b45309">龍</text></svg>龍7 / 熊8 / S6</div>
+        </div>
+      </div>
+      <div class="main-split">
+        <div class="sheet" id="sheetBig"></div>
+        <div class="main-right">
+          <div class="mini-bar">
+            <span>珠盤路（出目順）</span>
+            <small>BEAD PLATE</small>
+          </div>
+          <div class="sheet" id="sheetBead"></div>
+          <div class="ask-box">
+            <button class="ask-btn" id="askBBtn" type="button" title="次がバンカーなら下三路がどうなるか仮表示">
+              <div class="ask-title"><span class="dot r"></span>次がバンカーなら？</div>
+              <div class="ask-marks" id="askBMarks"></div>
+            </button>
+            <button class="ask-btn" id="askPBtn" type="button" title="次がプレイヤーなら下三路がどうなるか仮表示">
+              <div class="ask-title"><span class="dot b"></span>次がプレイヤーなら？</div>
+              <div class="ask-marks" id="askPMarks"></div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <!-- 下段左：大眼仔（Big Eye Boy：リング） -->
+    <div class="gold panel"><div class="body">
+      <div class="bar">
+        <h2>大眼仔</h2>
+        <span class="en">BIG EYE</span>
+        <div class="legend">
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#e3262f" stroke-width="4.5"/></svg>規則<span class="cnt r" id="nEyeR">0</span></div>
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#2a68e3" stroke-width="4.5"/></svg>不規則<span class="cnt b" id="nEyeB">0</span></div>
+        </div>
+      </div>
+      <div class="sheet" id="sheetEye"></div>
+    </div></div>
+
+    <!-- 下段中央：小路（Small Road：塗りつぶし丸） -->
+    <div class="gold panel"><div class="body">
+      <div class="bar">
+        <h2>小路</h2>
+        <span class="en">SMALL</span>
+        <div class="legend">
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="#e3262f"/></svg>規則<span class="cnt r" id="nSmallR">0</span></div>
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="#2a68e3"/></svg>不規則<span class="cnt b" id="nSmallB">0</span></div>
+        </div>
+      </div>
+      <div class="sheet" id="sheetSmall"></div>
+    </div></div>
+
+    <!-- 下段右：甲由路（Cockroach Pig：斜線） -->
+    <div class="gold panel"><div class="body">
+      <div class="bar">
+        <h2>甲由路</h2>
+        <span class="en">COCKROACH</span>
+        <div class="legend">
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><line x1="25" y1="7" x2="7" y2="25" stroke="#e3262f" stroke-width="5" stroke-linecap="round"/></svg>規則<span class="cnt r" id="nCockR">0</span></div>
+          <div class="item"><svg class="ring" viewBox="0 0 32 32"><line x1="25" y1="7" x2="7" y2="25" stroke="#2a68e3" stroke-width="5" stroke-linecap="round"/></svg>不規則<span class="cnt b" id="nCockB">0</span></div>
+        </div>
+      </div>
+      <div class="sheet" id="sheetCock"></div>
+    </div></div>
+
+    <!-- 下部入力コントローラー -->
+    <div class="gold controls"><div class="body">
+      <div class="play-btns">
+        <button class="pbtn banker" id="btnB" type="button">
+          <span class="main">バンカー (B)</span>
+          <span class="sub">赤・キー [B] / [1]</span>
+        </button>
+        <button class="pbtn player" id="btnP" type="button">
+          <span class="main">プレイヤー (P)</span>
+          <span class="sub">青・キー [P] / [2]</span>
+        </button>
+        <button class="pbtn tie" id="btnT" type="button">
+          <span class="main">タイ (T)</span>
+          <span class="sub">引分・キー [T] / [3]</span>
+        </button>
+      </div>
+
+      <div class="mods-wrap">
+        <div class="mods-label">
+          <span>任意オプション（押してから上の B / P / T を押すと一緒に記録）</span>
+          <span id="modStatus">選択なし</span>
+        </div>
+        <div class="mods-row">
+          <button class="chip" data-mod="bp" type="button">Bペア</button>
+          <button class="chip" data-mod="pp" type="button">Pペア</button>
+          <button class="chip" data-mod="d7" type="button">🐉 ドラゴン7</button>
+          <button class="chip" data-mod="p8" type="button">🐼 パンダ8</button>
+          <button class="chip" data-mod="s6" type="button">スーパー6</button>
+          <button class="chip" data-mod="nat" type="button">★ ナチュラル</button>
+        </div>
+      </div>
+
+      <div class="util-btns">
+        <button class="ubtn" id="btnUndo" type="button">↩ 1手戻す [Z]</button>
+        <button class="ubtn" id="btnRedo" type="button">↪ やり直す [Y]</button>
+        <button class="ubtn demo" id="btnDemo" type="button">🐉 デモ読込</button>
+        <button class="ubtn danger" id="btnNewShoe" type="button">新シュー</button>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<!-- 初心者向け 30秒バカラ＆罫線ガイド -->
+<div class="modal-mask" id="guideModal">
+  <div class="modal-gold">
+    <div class="modal-body">
+      <div class="modal-head">
+        <h3>30秒でわかるバカラ＆罫線ガイド</h3>
+        <button class="modal-close" id="closeGuideBtn" type="button">閉じる [Esc]</button>
+      </div>
+      <div class="g-grid">
+        <div class="g-card">
+          <h4>1. バカラの基本ルール（これだけでOK）</h4>
+          <ul>
+            <li><span class="tag-r">バンカー(B・赤)</span> と <span class="tag-b">プレイヤー(P・青)</span> のどちらが勝つかを予想するゲーム。</li>
+            <li>配られた2〜3枚の合計の <b>「下1桁が 9 に近い方」</b> が勝ち（例：7+8=15 → <b>5</b>）。</li>
+            <li><b>10・J・Q・K は「0」</b>、<b>A は「1」</b> として数える。</li>
+            <li>最初の2枚で合計 <b>8 または 9</b> が出たら <span class="tag-y">ナチュラル</span>（即勝負で最強）。</li>
+            <li>同じ数字なら <span class="tag-g">タイ（T・引き分け）</span>。B/P への賭け金は返ってくる。</li>
+          </ul>
+        </div>
+        <div class="g-card">
+          <h4>2. ドラゴン・ペア等の特別要素</h4>
+          <ul>
+            <li><b>🐉 ドラゴン（ドラゴンテール / ツラ）</b>：同じ側が <b>6連勝以上</b> して大路の下に突き当たり、右へ L 字に伸びる大連勝。「ツラに乗る」が王道。</li>
+            <li><b>🐉 ドラゴン7（EZバカラ）</b>：<span class="tag-r">バンカーが3枚合計「7」</span> で勝つレア役（配当40倍）。</li>
+            <li><b>🐼 パンダ8</b>：<span class="tag-b">プレイヤーが3枚合計「8」</span> で勝つレア役（配当25倍）。</li>
+            <li><b>Bペア / Pペア</b>：最初の2枚が同じ数字（例：8と8・配当11倍）。大路の左上(赤)/右下(青)に点が付く。</li>
+            <li><b>スーパー6</b>：バンカーが「6」で勝利（ノーコミッション卓用）。</li>
+          </ul>
+        </div>
+        <div class="g-card full">
+          <h4>3. 罫線（5つの表）の見方</h4>
+          <ul>
+            <li><b>大路（上段メイン）</b>：一番大事な表。同じ勝者が続くと <b>下に伸び</b>、勝者が変わると <b>右の列へ</b> 移る。6連勝以上で右へ折れるのが <b>ドラゴン</b>。タイはマスを進めず緑の斜線で記録。</li>
+            <li><b>珠盤路（上段右）</b>：1ゲーム目から出た順番どおりに縦6マスで並べた履歴表。「直近どれくらい出ているか」をそのまま確認できる。</li>
+            <li><b>下三路（大眼仔・小路・甲由路）</b>：大路の並び方に「規則性があるか」を自動計算する上級者用の表（それぞれ1列前・2列前・3列前と比較）。</li>
+          </ul>
+          <div class="warn-note">
+            <b>⚠️ 初心者が一番まちがえやすいポイント：</b><br>
+            下段3つ（大眼仔・小路・甲由路）の <span class="tag-r">赤</span> と <span class="tag-b">青</span> は「バンカー/プレイヤーの色」ではありません！<br>
+            <b><span class="tag-r">赤＝規則的（同じリズムが続いている）</span> ／ <span class="tag-b">青＝不規則（リズムが崩れた）</span></b> を表します。<br>
+            右中の <b>「次がバンカーなら？」「次がプレイヤーなら？」</b> ボタンを押すと、次に出たとき下三路がどう動くか仮表示できます！
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const ROWS = 6;
+  const COLOR = { R: "#e3262f", B: "#2a68e3", G: "#16a34a", GOLD: "#d97706" };
+  const STORAGE_KEY = "baccarat_road_v1";
+
+  // 状態
+  let state = {
+    shoe: 1,
+    history: [], // { w: 'B'|'P'|'T', bp?:bool, pp?:bool, d7?:bool, p8?:bool, s6?:bool, nat?:bool }
+    redo: []
+  };
+  let activeMods = { bp: false, pp: false, d7: false, p8: false, s6: false, nat: false };
+  let previewSide = null; // null | 'B' | 'P'
+
+  // =========================================================================
+  // バカラ罫線コアアルゴリズム（カジノ標準完全準拠）
+  // =========================================================================
+
+  /**
+   * 履歴から大路の「論理列（ドラゴンテール折り返し前の連続リスト）」を構築
+   * 返り値: [{ side: 'B'|'P', items: [ { entry, tiesAfter, isPreview? }, ... ] }, ...]
+   */
+  function buildLogicalCols(history) {
+    const cols = [];
+    let pendingTies = 0;
+    let pendingTieMeta = [];
+    for (const h of history) {
+      if (h.w === "T") {
+        if (cols.length > 0) {
+          const lastCol = cols[cols.length - 1];
+          const lastItem = lastCol.items[lastCol.items.length - 1];
+          lastItem.ties += 1;
+          if (h.bp) lastItem.tieBp = true;
+          if (h.pp) lastItem.tiePp = true;
+        } else {
+          pendingTies += 1;
+          pendingTieMeta.push(h);
+        }
+        continue;
+      }
+      const item = {
+        w: h.w,
+        bp: !!h.bp,
+        pp: !!h.pp,
+        d7: !!h.d7,
+        p8: !!h.p8,
+        s6: !!h.s6,
+        nat: !!h.nat,
+        ties: pendingTies,
+        isPreview: !!h.isPreview
+      };
+      pendingTies = 0;
+      pendingTieMeta = [];
+      if (cols.length === 0 || cols[cols.length - 1].side !== h.w) {
+        cols.push({ side: h.w, items: [item] });
+      } else {
+        cols[cols.length - 1].items.push(item);
+      }
+    }
+    return { cols, pendingTies };
+  }
+
+  /**
+   * 論理列を6行グリッドへ配置（ドラゴンテール＝L字折り返し＆衝突時右折れ完全対応）
+   */
+  function layoutBigRoad(logicalCols, maxVisibleCols) {
+    const cells = [];
+    const occ = new Set();
+    let streakStartCol = -1;
+
+    for (let li = 0; li < logicalCols.length; li++) {
+      const lcol = logicalCols[li];
+      streakStartCol += 1;
+      while (occ.has(streakStartCol + ",0")) streakStartCol += 1;
+
+      let col = streakStartCol;
+      let row = 0;
+      let tail = false;
+
+      for (let idx = 0; idx < lcol.items.length; idx++) {
+        const it = lcol.items[idx];
+        if (idx > 0) {
+          if (!tail && row + 1 < ROWS && !occ.has(col + "," + (row + 1))) {
+            row += 1;
+          } else {
+            col += 1;
+            tail = true;
+          }
+        }
+        occ.add(col + "," + row);
+        cells.push({
+          col, row,
+          c: it.w === "B" ? "R" : "B",
+          bp: it.bp, pp: it.pp, d7: it.d7, p8: it.p8, s6: it.s6, nat: it.nat,
+          ties: it.ties,
+          isTail: tail,
+          streakLen: idx + 1,
+          isPreview: it.isPreview
+        });
+      }
+    }
+
+    // 右端が画面列数を超えたら、直近が見えるよう左へスクロール（スライド窓）
+    const maxCol = cells.length ? Math.max(...cells.map(c => c.col)) : 0;
+    const shift = (maxVisibleCols && maxCol >= maxVisibleCols) ? (maxCol - maxVisibleCols + 1) : 0;
+    return { cells, shift, maxCol };
+  }
+
+  /**
+   * 派生罫線（下三路）の赤/青シーケンスを算出（カジノ公式ルール）
+   * offset: 1 = 大眼仔(Big Eye), 2 = 小路(Small Road), 3 = 甲由路(Cockroach Pig)
+   * 返り値: [{ c: 'R'|'B', isPreview?:bool }, ...]
+   */
+  function deriveRoadSeq(logicalCols, offset) {
+    const seq = [];
+    for (let colIdx = 0; colIdx < logicalCols.length; colIdx++) {
+      const items = logicalCols[colIdx].items;
+      for (let rowIdx = 0; rowIdx < items.length; rowIdx++) {
+        // 開始位置判定：
+        // colIdx < offset は対象外
+        // colIdx === offset かつ rowIdx === 0 は対象外（rowIdx >= 1 から開始）
+        // colIdx > offset は rowIdx === 0 から対象
+        if (colIdx < offset) continue;
+        if (colIdx === offset && rowIdx === 0) continue;
+
+        let isRed;
+        if (rowIdx === 0) {
+          // 新しい列の1行目：1つ前の列 と (1 + offset) つ前の列 の長さを比較
+          const lenA = logicalCols[colIdx - 1].items.length;
+          const lenB = logicalCols[colIdx - 1 - offset].items.length;
+          isRed = (lenA === lenB);
+        } else {
+          // 同じ列の2行目以降：offset 列前の列の同じ深さ(rowIdx)と1つ上(rowIdx-1)の有無
+          const refLen = logicalCols[colIdx - offset].items.length;
+          const hasSame = refLen > rowIdx;
+          const hasAbove = refLen > (rowIdx - 1);
+          // 同じ深さに丸があれば赤／同じ深さにも1つ上にも無ければ(突き抜け)赤／1つ上だけにあれば青
+          isRed = hasSame || (!hasSame && !hasAbove);
+        }
+        seq.push({ c: isRed ? "R" : "B", isPreview: !!items[rowIdx].isPreview });
+      }
+    }
+    return seq;
+  }
+
+  /**
+   * 派生罫線の 6行グリッド配置（同色下積み・衝突/底で右折れ）
+   */
+  function layoutDerivedRoad(seq, maxVisibleCols) {
+    const cells = [];
+    const occ = new Set();
+    let streakStartCol = -1;
+    let col = -1, row = 0, prev = "", tail = false;
+
+    for (const item of seq) {
+      if (item.c !== prev) {
+        streakStartCol += 1;
+        while (occ.has(streakStartCol + ",0")) streakStartCol += 1;
+        col = streakStartCol; row = 0; tail = false;
+      } else if (!tail && row + 1 < ROWS && !occ.has(col + "," + (row + 1))) {
+        row += 1;
+      } else {
+        col += 1; tail = true;
+      }
+      occ.add(col + "," + row);
+      cells.push({ col, row, c: item.c, isPreview: !!item.isPreview });
+      prev = item.c;
+    }
+
+    const maxCol = cells.length ? Math.max(...cells.map(c => c.col)) : 0;
+    const shift = (maxVisibleCols && maxCol >= maxVisibleCols) ? (maxCol - maxVisibleCols + 1) : 0;
+    return { cells, shift };
+  }
+
+  /**
+   * 問路（次が B または P だったとき、下三路の次の一手が赤か青かを返す）
+   */
+  function predictNext(history, nextSide) {
+    const sim = history.concat([{ w: nextSide, isPreview: true }]);
+    const { cols } = buildLogicalCols(sim);
+    const prevCols = buildLogicalCols(history).cols;
+    const out = {};
+    for (const [k, off] of [["eye", 1], ["small", 2], ["cock", 3]]) {
+      const before = deriveRoadSeq(prevCols, off);
+      const after = deriveRoadSeq(cols, off);
+      out[k] = after.length > before.length ? after[after.length - 1].c : null;
+    }
+    return out;
+  }
+
+  /**
+   * 現在の流れ・ドラゴン判定（初心者向けリアルタイム状況バッジ）
+   */
+  function analyzeTrend(logicalCols) {
+    if (!logicalCols.length) {
+      return { text: "待機中：下のボタンで結果を入力", dragon: false };
+    }
+    const last = logicalCols[logicalCols.length - 1];
+    const sideJp = last.side === "B" ? "バンカー(赤)" : "プレイヤー(青)";
+    const len = last.items.length;
+
+    if (len >= 6) {
+      return { text: `🐉 ドラゴン発生中！ ${sideJp} ${len}連勝`, dragon: true };
+    }
+    if (len >= 4) {
+      return { text: `🔥 ツラ進行中：${sideJp} ${len}連勝（あと${6 - len}でドラゴン）`, dragon: false };
+    }
+    // テレコ（交互1-1-1-1）判定
+    let chop = 0;
+    for (let i = logicalCols.length - 1; i >= 0; i--) {
+      if (logicalCols[i].items.length === 1) chop++;
+      else break;
+    }
+    if (chop >= 4) {
+      return { text: `⚡ テレコ（交互）${chop}連続中`, dragon: false };
+    }
+    // ニコイチ（2-1-2-1）やニコニコ（2-2-2）
+    if (logicalCols.length >= 3) {
+      const a = logicalCols[logicalCols.length - 1].items.length;
+      const b = logicalCols[logicalCols.length - 2].items.length;
+      const c = logicalCols[logicalCols.length - 3].items.length;
+      if (a === 2 && b === 2 && c === 2) {
+        return { text: "✨ ニコニコ（2連×3）発生中", dragon: false };
+      }
+      if ((a === 2 && b === 1 && c === 2) || (a === 1 && b === 2 && c === 1)) {
+        return { text: "✨ ニコイチ（2-1リズム）進行中", dragon: false };
+      }
+    }
+    if (len >= 2) {
+      return { text: `${sideJp} ${len}連勝中`, dragon: false };
+    }
+    return { text: `直近：${sideJp} 勝利（全${logicalCols.length}列）`, dragon: false };
+  }
+
+  // =========================================================================
+  // SVG 描画（白シート＆グリッド表現）
+  // =========================================================================
+
+  function makeGridSvg(w, h, cols, rows) {
+    const cw = w / cols, ch = h / rows;
+    let s = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">`;
+    for (let i = 1; i < cols; i++) {
+      const x = (i * cw).toFixed(1);
+      s += `<line x1="${x}" y1="0" x2="${x}" y2="${h}" stroke="#cfd8e7" stroke-width="1.4"/>`;
+    }
+    for (let j = 1; j < rows; j++) {
+      const y = (j * ch).toFixed(1);
+      s += `<line x1="0" y1="${y}" x2="${w}" y2="${y}" stroke="#cfd8e7" stroke-width="1.4"/>`;
+    }
+    return { s, cw, ch };
+  }
+
+  function drawBigRoad(el, logicalCols, pendingTies) {
+    const w = el.offsetWidth || 1400, h = el.offsetHeight || 360;
+    const ch = h / ROWS;
+    const cols = Math.max(12, Math.round(w / ch));
+    const { s: base, cw } = makeGridSvg(w, h, cols, ROWS);
+    let s = base;
+    const m = Math.min(cw, ch);
+
+    const { cells, shift } = layoutBigRoad(logicalCols, cols);
+
+    // まだB/Pが出ていない初回タイがある場合、左上マスに緑線表示
+    if (cells.length === 0 && pendingTies > 0) {
+      const cx = 0.5 * cw, cy = 0.5 * ch;
+      s += `<line x1="${(cx - m * 0.28).toFixed(1)}" y1="${(cy + m * 0.28).toFixed(1)}" x2="${(cx + m * 0.28).toFixed(1)}" y2="${(cy - m * 0.28).toFixed(1)}" stroke="${COLOR.G}" stroke-width="${(m * 0.13).toFixed(1)}" stroke-linecap="round"/>`;
+      if (pendingTies > 1) {
+        s += `<text x="${cx.toFixed(1)}" y="${(cy + m * 0.12).toFixed(1)}" text-anchor="middle" font-size="${(m * 0.34).toFixed(1)}" font-weight="900" fill="${COLOR.G}" stroke="#fff" stroke-width="${(m * 0.08).toFixed(1)}" paint-order="stroke">${pendingTies}</text>`;
+      }
+    }
+
+    for (const cell of cells) {
+      const vc = cell.col - shift;
+      if (vc < 0 || vc >= cols) continue;
+      const cx = (vc + 0.5) * cw, cy = (cell.row + 0.5) * ch;
+      const col = COLOR[cell.c];
+      const cls = cell.isPreview ? ' class="preview-mark"' : "";
+
+      s += `<g${cls}>`;
+      // ドラゴンテール（6連勝以上の折り返しセル）は薄い金ハイライトを敷く
+      if (cell.isTail) {
+        s += `<rect x="${(vc * cw + 1).toFixed(1)}" y="${(cell.row * ch + 1).toFixed(1)}" width="${(cw - 2).toFixed(1)}" height="${(ch - 2).toFixed(1)}" fill="rgba(245,210,107,0.22)"/>`;
+      }
+
+      // 大路のメイン丸（視認性の高い太リング＋特別役の中身）
+      const r = m * 0.35;
+      const sw = m * 0.12;
+      if (cell.d7 || cell.p8) {
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff7d6" stroke="${col}" stroke-width="${sw.toFixed(1)}"/>`;
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(r + m * 0.06).toFixed(1)}" fill="none" stroke="${COLOR.GOLD}" stroke-width="${(m * 0.045).toFixed(1)}"/>`;
+        const lbl = cell.d7 ? "龍" : "熊";
+        s += `<text x="${cx.toFixed(1)}" y="${(cy + m * 0.13).toFixed(1)}" text-anchor="middle" font-size="${(m * 0.36).toFixed(1)}" font-weight="900" fill="${cell.d7 ? '#b45309' : '#1d4ed8'}">${lbl}</text>`;
+      } else if (cell.s6) {
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff5f5" stroke="${col}" stroke-width="${sw.toFixed(1)}"/>`;
+        s += `<text x="${cx.toFixed(1)}" y="${(cy + m * 0.14).toFixed(1)}" text-anchor="middle" font-size="${(m * 0.4).toFixed(1)}" font-weight="900" fill="${col}">6</text>`;
+      } else {
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${sw.toFixed(1)}"/>`;
+      }
+
+      // ナチュラル印（中央の小さい金星/ドット）
+      if (cell.nat && !cell.d7 && !cell.p8 && !cell.s6) {
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(m * 0.11).toFixed(1)}" fill="${COLOR.GOLD}"/>`;
+      }
+
+      // タイ（緑の斜線＋2回以上なら回数）
+      if (cell.ties > 0) {
+        const d = m * 0.31;
+        s += `<line x1="${(cx - d).toFixed(1)}" y1="${(cy + d).toFixed(1)}" x2="${(cx + d).toFixed(1)}" y2="${(cy - d).toFixed(1)}" stroke="#ffffff" stroke-width="${(m * 0.16).toFixed(1)}" stroke-linecap="round"/>`;
+        s += `<line x1="${(cx - d).toFixed(1)}" y1="${(cy + d).toFixed(1)}" x2="${(cx + d).toFixed(1)}" y2="${(cy - d).toFixed(1)}" stroke="${COLOR.G}" stroke-width="${(m * 0.095).toFixed(1)}" stroke-linecap="round"/>`;
+        if (cell.ties > 1) {
+          s += `<text x="${(cx + m * 0.02).toFixed(1)}" y="${(cy + m * 0.14).toFixed(1)}" text-anchor="middle" font-size="${(m * 0.34).toFixed(1)}" font-weight="900" fill="${COLOR.G}" stroke="#ffffff" stroke-width="${(m * 0.08).toFixed(1)}" paint-order="stroke">${cell.ties}</text>`;
+        }
+      }
+
+      // ペア印（カジノ標準：左上＝赤Bペア／右下＝青Pペア）
+      const pr = m * 0.125;
+      if (cell.bp) {
+        s += `<circle cx="${(cx - m * 0.28).toFixed(1)}" cy="${(cy - m * 0.28).toFixed(1)}" r="${pr.toFixed(1)}" fill="${COLOR.R}" stroke="#ffffff" stroke-width="${(m * 0.045).toFixed(1)}"/>`;
+      }
+      if (cell.pp) {
+        s += `<circle cx="${(cx + m * 0.28).toFixed(1)}" cy="${(cy + m * 0.28).toFixed(1)}" r="${pr.toFixed(1)}" fill="${COLOR.B}" stroke="#ffffff" stroke-width="${(m * 0.045).toFixed(1)}"/>`;
+      }
+      s += `</g>`;
+    }
+    el.innerHTML = s + "</svg>";
+  }
+
+  function drawBeadPlate(el, history) {
+    const w = el.offsetWidth || 400, h = el.offsetHeight || 240;
+    const ch = h / ROWS;
+    const cols = Math.max(8, Math.round(w / ch));
+    const { s: base, cw } = makeGridSvg(w, h, cols, ROWS);
+    let s = base;
+    const m = Math.min(cw, ch);
+
+    const totalColsUsed = Math.ceil(history.length / ROWS);
+    const shift = totalColsUsed > cols ? (totalColsUsed - cols) : 0;
+
+    history.forEach((h, idx) => {
+      const col = Math.floor(idx / ROWS) - shift;
+      const row = idx % ROWS;
+      if (col < 0 || col >= cols) return;
+      const cx = (col + 0.5) * cw, cy = (row + 0.5) * ch;
+      const fill = h.w === "B" ? COLOR.R : (h.w === "P" ? COLOR.B : COLOR.G);
+      const lbl = h.d7 ? "龍" : (h.p8 ? "熊" : (h.s6 ? "6" : h.w));
+      const cls = h.isPreview ? ' class="preview-mark"' : "";
+      s += `<g${cls}>`;
+      s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(m * 0.39).toFixed(1)}" fill="${fill}"${(h.d7 || h.p8) ? ' stroke="#f5d26b" stroke-width="2.5"' : ""}/>`;
+      s += `<text x="${cx.toFixed(1)}" y="${(cy + m * 0.15).toFixed(1)}" text-anchor="middle" font-size="${(m * 0.44).toFixed(1)}" font-weight="900" fill="#ffffff">${lbl}</text>`;
+      if (h.bp) {
+        s += `<circle cx="${(cx - m * 0.29).toFixed(1)}" cy="${(cy - m * 0.29).toFixed(1)}" r="${(m * 0.12).toFixed(1)}" fill="${COLOR.R}" stroke="#fff" stroke-width="1.5"/>`;
+      }
+      if (h.pp) {
+        s += `<circle cx="${(cx + m * 0.29).toFixed(1)}" cy="${(cy + m * 0.29).toFixed(1)}" r="${(m * 0.12).toFixed(1)}" fill="${COLOR.B}" stroke="#fff" stroke-width="1.5"/>`;
+      }
+      s += `</g>`;
+    });
+    el.innerHTML = s + "</svg>";
+  }
+
+  function drawDerivedSheet(el, seq, mark) {
+    const w = el.offsetWidth || 600, h = el.offsetHeight || 260;
+    const ch = h / ROWS;
+    const cols = Math.max(10, Math.round(w / ch));
+    const { s: base, cw } = makeGridSvg(w, h, cols, ROWS);
+    let s = base;
+    const m = Math.min(cw, ch);
+
+    const { cells, shift } = layoutDerivedRoad(seq, cols);
+    for (const cell of cells) {
+      const vc = cell.col - shift;
+      if (vc < 0 || vc >= cols) continue;
+      const cx = (vc + 0.5) * cw, cy = (cell.row + 0.5) * ch;
+      const col = COLOR[cell.c];
+      const cls = cell.isPreview ? ' class="preview-mark"' : "";
+      s += `<g${cls}>`;
+      if (mark === "ring") {
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(m * 0.34).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${(m * 0.12).toFixed(1)}"/>`;
+      } else if (mark === "fill") {
+        s += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(m * 0.35).toFixed(1)}" fill="${col}"/>`;
+      } else {
+        const d = m * 0.31;
+        s += `<line x1="${(cx + d).toFixed(1)}" y1="${(cy - d).toFixed(1)}" x2="${(cx - d).toFixed(1)}" y2="${(cy + d).toFixed(1)}" stroke="${col}" stroke-width="${(m * 0.14).toFixed(1)}" stroke-linecap="round"/>`;
+      }
+      s += `</g>`;
+    }
+    el.innerHTML = s + "</svg>";
+  }
+
+  function renderAskMarks(containerId, pred) {
+    const el = document.getElementById(containerId);
+    const svgOf = (c, kind) => {
+      if (!c) return `<svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="4" fill="rgba(255,255,255,.2)"/></svg>`;
+      const col = COLOR[c];
+      if (kind === "ring") return `<svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="9.5" fill="none" stroke="${col}" stroke-width="4"/></svg>`;
+      if (kind === "fill") return `<svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="9.5" fill="${col}"/></svg>`;
+      return `<svg viewBox="0 0 28 28"><line x1="21" y1="7" x2="7" y2="21" stroke="${col}" stroke-width="4.5" stroke-linecap="round"/></svg>`;
+    };
+    el.innerHTML = svgOf(pred.eye, "ring") + svgOf(pred.small, "fill") + svgOf(pred.cock, "slash");
+  }
+
+  // =========================================================================
+  // 画面全体の描画・永続化・操作ハンドラ
+  // =========================================================================
+
+  function setText(id, v) { document.getElementById(id).textContent = v; }
+
+  function render() {
+    const realHist = state.history;
+    const dispHist = previewSide ? realHist.concat([{ w: previewSide, isPreview: true }]) : realHist;
+
+    // カウント（実履歴のみ）
+    let nB = 0, nP = 0, nT = 0, nBP = 0, nPP = 0, nD7 = 0, nP8 = 0;
+    for (const h of realHist) {
+      if (h.w === "B") nB++;
+      else if (h.w === "P") nP++;
+      else if (h.w === "T") nT++;
+      if (h.bp) nBP++;
+      if (h.pp) nPP++;
+      if (h.d7) nD7++;
+      if (h.p8) nP8++;
+    }
+    const total = realHist.length;
+    const bpTotal = nB + nP;
+    setText("shoeLabel", `SHOE #${state.shoe}（${total}戦）`);
+    setText("nBanker", nB);
+    setText("nPlayer", nP);
+    setText("nTie", nT);
+    setText("nTotal", total);
+    setText("pctB", bpTotal ? `${Math.round(nB * 100 / bpTotal)}%` : "");
+    setText("pctP", bpTotal ? `${Math.round(nP * 100 / bpTotal)}%` : "");
+    setText("nBP", nBP);
+    setText("nPP", nPP);
+    setText("nD7", nD7);
+    setText("nP8", nP8);
+
+    // 論理列と下三路の計算
+    const { cols: realCols } = buildLogicalCols(realHist);
+    const { cols: dispCols, pendingTies } = buildLogicalCols(dispHist);
+
+    const eyeSeq = deriveRoadSeq(dispCols, 1);
+    const smallSeq = deriveRoadSeq(dispCols, 2);
+    const cockSeq = deriveRoadSeq(dispCols, 3);
+
+    const countRB = (seq) => {
+      let r = 0, b = 0;
+      for (const x of seq) {
+        if (x.isPreview) continue;
+        if (x.c === "R") r++; else b++;
+      }
+      return [r, b];
+    };
+    const [eR, eB] = countRB(eyeSeq);
+    const [sR, sB] = countRB(smallSeq);
+    const [cR, cB] = countRB(cockSeq);
+    setText("nEyeR", eR); setText("nEyeB", eB);
+    setText("nSmallR", sR); setText("nSmallB", sB);
+    setText("nCockR", cR); setText("nCockB", cB);
+
+    // トレンド・ドラゴン判定
+    const tr = analyzeTrend(realCols);
+    const pill = document.getElementById("trendPill");
+    pill.textContent = tr.text;
+    pill.classList.toggle("dragon", tr.dragon);
+
+    // 罫線5枚の描画
+    drawBigRoad(document.getElementById("sheetBig"), dispCols, pendingTies);
+    drawBeadPlate(document.getElementById("sheetBead"), dispHist);
+    drawDerivedSheet(document.getElementById("sheetEye"), eyeSeq, "ring");
+    drawDerivedSheet(document.getElementById("sheetSmall"), smallSeq, "fill");
+    drawDerivedSheet(document.getElementById("sheetCock"), cockSeq, "slash");
+
+    // 問路予測
+    renderAskMarks("askBMarks", predictNext(realHist, "B"));
+    renderAskMarks("askPMarks", predictNext(realHist, "P"));
+    document.getElementById("askBBtn").classList.toggle("previewing", previewSide === "B");
+    document.getElementById("askPBtn").classList.toggle("previewing", previewSide === "P");
+
+    // ボタン活性
+    document.getElementById("btnUndo").disabled = realHist.length === 0;
+    document.getElementById("btnRedo").disabled = state.redo.length === 0;
+  }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.history)) {
+          state.shoe = parsed.shoe || 1;
+          state.history = parsed.history;
+          state.redo = Array.isArray(parsed.redo) ? parsed.redo : [];
+        }
+      }
+    } catch (e) {}
+  }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+  }
+
+  function clearMods() {
+    for (const k of Object.keys(activeMods)) activeMods[k] = false;
+    syncModUI();
+  }
+
+  function syncModUI() {
+    const names = { bp: "Bペア", pp: "Pペア", d7: "🐉ドラゴン7", p8: "🐼パンダ8", s6: "スーパー6", nat: "★ナチュラル" };
+    const picked = [];
+    document.querySelectorAll(".chip[data-mod]").forEach(btn => {
+      const k = btn.dataset.mod;
+      const on = !!activeMods[k];
+      btn.classList.toggle("on", on);
+      btn.classList.toggle("red", on && (k === "bp" || k === "s6"));
+      btn.classList.toggle("blue", on && (k === "pp" || k === "p8"));
+      if (on) picked.push(names[k]);
+    });
+    setText("modStatus", picked.length ? `選択中：${picked.join(" + ")}` : "選択なし");
+  }
+
+  function addResult(w) {
+    previewSide = null;
+    const entry = { w };
+    if (activeMods.bp) entry.bp = true;
+    if (activeMods.pp) entry.pp = true;
+    if (activeMods.d7) { entry.d7 = true; if (w !== "B") { entry.w = "B"; } }
+    if (activeMods.p8) { entry.p8 = true; if (w !== "P") { entry.w = "P"; } }
+    if (activeMods.s6) { entry.s6 = true; if (w !== "B") { entry.w = "B"; } }
+    if (activeMods.nat) entry.nat = true;
+
+    state.history.push(entry);
+    state.redo = [];
+    clearMods();
+    save();
+    render();
+  }
+
+  function undo() {
+    if (!state.history.length) return;
+    previewSide = null;
+    state.redo.push(state.history.pop());
+    save();
+    render();
+  }
+
+  function redo() {
+    if (!state.redo.length) return;
+    previewSide = null;
+    state.history.push(state.redo.pop());
+    save();
+    render();
+  }
+
+  function newShoe() {
+    if (state.history.length > 0 && !confirm("現在の罫線をクリアして次のシューを開始しますか？")) return;
+    previewSide = null;
+    state.shoe += 1;
+    state.history = [];
+    state.redo = [];
+    clearMods();
+    save();
+    render();
+    toast(`SHOE #${state.shoe} を開始しました`);
+  }
+
+  function loadDemo() {
+    // ドラゴン（バンカー8連勝のL字折り返し）＋タイ連続＋ペア＋ドラゴン7＋テレコが入った見本シュー
+    previewSide = null;
+    state.history = [
+      { w: "B" }, { w: "B", bp: true }, { w: "P" }, { w: "B" }, { w: "T" }, { w: "P" },
+      { w: "P", pp: true }, { w: "P", p8: true }, { w: "B", nat: true }, { w: "B" },
+      { w: "P" }, { w: "B" }, { w: "P" }, { w: "B" }, { w: "T" }, { w: "T" },
+      { w: "B" }, { w: "B", s6: true }, { w: "B" }, { w: "B" }, { w: "B", d7: true },
+      { w: "B" }, { w: "B" }, { w: "B" }
+    ];
+    state.redo = [];
+    clearMods();
+    save();
+    render();
+    toast("🐉 ドラゴン（バンカー9連勝）入りのデモを読み込みました");
+  }
+
+  // イベント登録
+  document.getElementById("btnB").addEventListener("click", () => addResult("B"));
+  document.getElementById("btnP").addEventListener("click", () => addResult("P"));
+  document.getElementById("btnT").addEventListener("click", () => addResult("T"));
+  document.getElementById("btnUndo").addEventListener("click", undo);
+  document.getElementById("btnRedo").addEventListener("click", redo);
+  document.getElementById("btnNewShoe").addEventListener("click", newShoe);
+  document.getElementById("btnDemo").addEventListener("click", loadDemo);
+
+  document.querySelectorAll(".chip[data-mod]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const k = btn.dataset.mod;
+      activeMods[k] = !activeMods[k];
+      // ドラゴン7とパンダ8は排他
+      if (k === "d7" && activeMods.d7) { activeMods.p8 = false; activeMods.s6 = false; }
+      if (k === "p8" && activeMods.p8) { activeMods.d7 = false; activeMods.s6 = false; }
+      if (k === "s6" && activeMods.s6) { activeMods.d7 = false; activeMods.p8 = false; }
+      syncModUI();
+    });
+  });
+
+  // 問路プレビュー切替
+  document.getElementById("askBBtn").addEventListener("click", () => {
+    previewSide = previewSide === "B" ? null : "B";
+    render();
+    if (previewSide) toast("次がバンカー(B)だった場合を点滅プレビュー中");
+  });
+  document.getElementById("askPBtn").addEventListener("click", () => {
+    previewSide = previewSide === "P" ? null : "P";
+    render();
+    if (previewSide) toast("次がプレイヤー(P)だった場合を点滅プレビュー中");
+  });
+
+  // ルールガイドモーダル
+  const modal = document.getElementById("guideModal");
+  document.getElementById("openGuideBtn").addEventListener("click", () => modal.classList.add("open"));
+  document.getElementById("closeGuideBtn").addEventListener("click", () => modal.classList.remove("open"));
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+
+  // キーボードショートカット
+  document.addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "escape") { modal.classList.remove("open"); previewSide = null; render(); return; }
+    if (modal.classList.contains("open")) return;
+    if (k === "b" || k === "1") addResult("B");
+    else if (k === "p" || k === "2") addResult("P");
+    else if (k === "t" || k === "3") addResult("T");
+    else if (k === "z" || k === "backspace") undo();
+    else if (k === "y") redo();
+    else if (k === "?" || k === "h") modal.classList.add("open");
+  });
+
+  // 16:9 基準の画面フィット処理
+  function fit() {
+    const stage = document.getElementById("stage");
+    const W = innerWidth, H = innerHeight;
+    let scale, w, h;
+    if (W / H >= 1920 / 1080) { scale = H / 1080; h = 1080; w = W / scale; }
+    else { scale = W / 1920; w = 1920; h = H / scale; }
+    stage.style.width = w + "px";
+    stage.style.height = h + "px";
+    stage.style.transform = `translate(-50%,-50%) scale(${scale})`;
+    render();
+  }
+  addEventListener("resize", fit);
+
+  // テスト用フック（コンソール／自動テストから検証可能）
+  window.__BACCARAT__ = { buildLogicalCols, layoutBigRoad, deriveRoadSeq, layoutDerivedRoad, predictNext, analyzeTrend, addResult, undo, redo, loadDemo };
+
+  load();
+  syncModUI();
+  fit();
+})();
+</script>
+</body>
+</html>
