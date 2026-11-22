@@ -504,10 +504,10 @@
       </div>
 
       <div class="util-btns">
-        <button class="ubtn" id="btnUndo" type="button">↩ 1手戻す [Z]</button>
-        <button class="ubtn" id="btnRedo" type="button">↪ やり直す [Y]</button>
-        <button class="ubtn demo" id="btnDemo" type="button">🐉 デモ読込</button>
-        <button class="ubtn danger" id="btnNewShoe" type="button">新シュー</button>
+        <button class="ubtn" id="btnUndo" type="button" title="直前の入力を1手戻す（リセット直後ならリセット前を復元）">↩ 1手戻す [Z]</button>
+        <button class="ubtn" id="btnRedo" type="button" title="戻した手を1手進める">↪ 1手進める [Y]</button>
+        <button class="ubtn danger" id="btnReset" type="button" title="盤面を0戦に戻して最初からやり直す">↻ 最初からやり直し</button>
+        <button class="ubtn demo" id="btnDemo" type="button" title="ドラゴン発生時の見本データを読み込む">🐉 デモ</button>
       </div>
     </div></div>
   </div>
@@ -575,7 +575,8 @@
   let state = {
     shoe: 1,
     history: [], // { w: 'B'|'P'|'T', bp?:bool, pp?:bool, d7?:bool, p8?:bool, s6?:bool, nat?:bool }
-    redo: []
+    redo: [],
+    lastClearedHistory: null // 最初からやり直し直後に「1手戻す」で復元するための1世代退避
   };
   let activeMods = { bp: false, pp: false, d7: false, p8: false, s6: false, nat: false };
   let previewSide = null; // null | 'B' | 'P'
@@ -1045,8 +1046,9 @@
     document.getElementById("askPBtn").classList.toggle("previewing", previewSide === "P");
 
     // ボタン活性
-    document.getElementById("btnUndo").disabled = realHist.length === 0;
+    document.getElementById("btnUndo").disabled = (realHist.length === 0 && !state.lastClearedHistory);
     document.getElementById("btnRedo").disabled = state.redo.length === 0;
+    document.getElementById("btnReset").disabled = realHist.length === 0;
   }
 
   function save() {
@@ -1106,17 +1108,28 @@
 
     state.history.push(entry);
     state.redo = [];
+    state.lastClearedHistory = null;
     clearMods();
     save();
     render();
   }
 
   function undo() {
-    if (!state.history.length) return;
     previewSide = null;
-    state.redo.push(state.history.pop());
-    save();
-    render();
+    if (state.history.length > 0) {
+      state.redo.push(state.history.pop());
+      save();
+      render();
+      return;
+    }
+    if (state.lastClearedHistory && state.lastClearedHistory.length > 0) {
+      state.history = state.lastClearedHistory;
+      state.lastClearedHistory = null;
+      state.redo = [];
+      save();
+      render();
+      toast("やり直し前の盤面を復元しました");
+    }
   }
 
   function redo() {
@@ -1127,16 +1140,17 @@
     render();
   }
 
-  function newShoe() {
-    if (state.history.length > 0 && !confirm("現在の罫線をクリアして次のシューを開始しますか？")) return;
+  function resetAll() {
+    if (state.history.length === 0) return;
+    if (!confirm("現在の罫線をすべて消去して、最初からやり直しますか？\n（うっかり押しても「1手戻す」で復元できます）")) return;
     previewSide = null;
-    state.shoe += 1;
+    state.lastClearedHistory = state.history.slice();
     state.history = [];
     state.redo = [];
     clearMods();
     save();
     render();
-    toast(`SHOE #${state.shoe} を開始しました`);
+    toast("最初からやり直しました（間違いなら「1手戻す」で復元できます）");
   }
 
   function loadDemo() {
@@ -1162,7 +1176,7 @@
   document.getElementById("btnT").addEventListener("click", () => addResult("T"));
   document.getElementById("btnUndo").addEventListener("click", undo);
   document.getElementById("btnRedo").addEventListener("click", redo);
-  document.getElementById("btnNewShoe").addEventListener("click", newShoe);
+  document.getElementById("btnReset").addEventListener("click", resetAll);
   document.getElementById("btnDemo").addEventListener("click", loadDemo);
 
   document.querySelectorAll(".chip[data-mod]").forEach(btn => {
@@ -1224,7 +1238,7 @@
   addEventListener("resize", fit);
 
   // テスト用フック（コンソール／自動テストから検証可能）
-  window.__BACCARAT__ = { buildLogicalCols, layoutBigRoad, deriveRoadSeq, layoutDerivedRoad, predictNext, analyzeTrend, addResult, undo, redo, loadDemo };
+  window.__BACCARAT__ = { buildLogicalCols, layoutBigRoad, deriveRoadSeq, layoutDerivedRoad, predictNext, analyzeTrend, addResult, undo, redo, resetAll, loadDemo, getState: () => state };
 
   load();
   syncModUI();
